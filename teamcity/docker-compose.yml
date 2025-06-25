@@ -1,0 +1,79 @@
+version: '3'
+services:
+  db:
+    image: mysql
+    restart: always
+    volumes:
+      - ./db_data:/var/lib/mysql
+      - ./db_conf:/etc/mysql/conf.d:ro
+      - ./db_log:/var/log/mysql:ro
+    environment:
+      MYSQL_DATABASE: "${MYSQL_DB_NAME}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PW}"
+      MYSQL_ROOT_HOST: '${MYSQL_ROOT_HOST}'
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PW}"
+    command: ['--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci']
+    ports:
+      - "${MYSQL_EXT_PORT}:3306"
+
+  teamcity-agent-1:
+    image: jetbrains/teamcity-agent:latest
+    depends_on:
+      - teamcity
+    container_name: agent011
+    restart: always
+    ports:
+      - 9081:9090
+    volumes:
+      - ./agents/agent-1/conf:/data/teamcity_agent/conf
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - SERVER_URL=http://teamcity:8111
+      - AGENT_NAME=agent011
+      - DOCKER_IN_DOCKER=start
+
+  teamcity-agent-2:
+    image: jetbrains/teamcity-agent:latest
+    depends_on:
+      - teamcity
+    container_name: agent022
+    restart: always
+    ports:
+      - 9082:9090
+    volumes:
+      - ./agents/agent-2/conf:/data/teamcity_agent/conf
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - SERVER_URL=http://teamcity:8111
+      - AGENT_NAME=agent022
+      - DOCKER_IN_DOCKER=start
+
+  teamcity-agent-3:
+    image: jetbrains/teamcity-agent:latest
+    depends_on:
+      - teamcity
+    container_name: agent033
+    restart: always
+    ports:
+      - 9083:9090
+    volumes:
+      - ./agents/agent-3/conf:/data/teamcity_agent/conf
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - SERVER_URL=http://teamcity:8111
+      - AGENT_NAME=agent033
+      - DOCKER_IN_DOCKER=start
+
+  teamcity:
+    depends_on:
+      - db
+    image: jetbrains/teamcity-server:2024.07.3
+    container_name: teamcity
+    restart: always
+    ports:
+      - 8111:8111
+    volumes:
+      - ./data:/data/teamcity_server/datadir
+      - ./logs:/opt/teamcity/logs
+
